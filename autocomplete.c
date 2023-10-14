@@ -163,6 +163,8 @@ Node* getNode(Node* root, char substring[]) {
 
 
 char* getCompletions(Node* root, char word[MAXLEN]) {
+    int  found=-1;
+    char wordsFound[MAX][MAXLEN];
     char copywod[MAXLEN];
     strcpy(copywod,word);
     Node* parentNode = getNode(root,copywod);
@@ -182,17 +184,15 @@ char* getCompletions(Node* root, char word[MAXLEN]) {
         word[strlen(word) - 1] ='\0';
     }
     else{
-        // printf("Minimum 2 characters required");
-        // return "";
-        word[strlen(word)] ='\0';
+        printf("Minimum 2 characters required");
+        return "";
     }
     // std::stack<std::string> prefixes;
 
     pushW(word);
 
     // std::vector<std::string> wordsFound;
-    int  found=-1;
-    char wordsFound[MAX][MAXLEN];
+    
 
     while (!isEmptyN()){
         currentNode = topN();
@@ -255,7 +255,7 @@ int main(){
     // printf("%s\n",arr);
     char buff[MAXLEN];
     // strcpy(buff,"compli");
-    printf("\nEnter random word to complete\n");
+    printf("\nEnter word to complete\n");
     scanf("%s",buff);
 
     getCompletions(root,buff);

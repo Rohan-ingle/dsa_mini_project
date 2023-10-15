@@ -1,10 +1,3 @@
-#!comment: This list has been compiled by Solar Designer of Openwall Project,
-#!comment: http://www.openwall.com/wordlists/
-#!comment:
-#!comment: Pre-processed input wordlist files:
-#!comment: 10001fr.equ   4160offi.cia  englex-dict  muller       Unix.dict
-#!comment: 113809of.fic  Antworth      ftp.uu.net   pocket-dic   web2
-#!comment: 366often.mis  CRL.words     minix        special.eng  wordset_4k
 a
 aa
 aaa

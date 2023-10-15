@@ -3,7 +3,7 @@
 #include<stdbool.h>
 #include<ctype.h>
 #include<stdlib.h>
-#define MAX 999
+#define MAX 1000
 #define MAXLEN 1000
 
 typedef struct node{
@@ -12,6 +12,9 @@ typedef struct node{
     bool isWord;
 
 } Node;
+
+
+
 
 //----------------------------------------------------------------
 //string stack related
@@ -51,7 +54,6 @@ bool isEmptyN(){
     return (tos1 < 0);
 }
 
-//------------------------------------------------------------------
 Node* newNode(){
     Node* temp= (Node*)malloc(sizeof(Node));
     temp->ch = '\0';
@@ -67,7 +69,8 @@ void init(Node* root){
     root=newNode();    
 }
 
-Node* insert(Node* root, char word[]) {
+
+Node* insert(Node* root, char word[]){
     Node* currNode = root;
     char currentLetter = '\0';
     int letterIndex = 0;
@@ -78,7 +81,7 @@ Node* insert(Node* root, char word[]) {
         // convert to lower case
         currentLetter = (char)tolower((int)word[i]);
 
-        // Shift index
+        // Shift index, ascci table: https://www.cs.cmu.edu/~pattis/15-1XX/common/handouts/ascii.html
         letterIndex = (int)currentLetter - 97;
 
         // We only accept letters
@@ -88,7 +91,7 @@ Node* insert(Node* root, char word[]) {
             // Do nothing
         }
         else {
-            // Create a new node
+            // Create new node
             currNode->child[letterIndex] = newNode();
             currNode->child[letterIndex]->ch = currentLetter;
         }
@@ -101,7 +104,7 @@ Node* insert(Node* root, char word[]) {
 
 
 Node* insertDictionary(Node *root) {
-    char DICTIONARY_FILE[] = "C:\\Users\\NotAPro\\Desktop\\dsa_github\\dictionary.txt";
+    char DICTIONARY_FILE[] = "dictionary.txt";
     
     FILE *file = fopen ( DICTIONARY_FILE, "r" );
 
@@ -113,8 +116,6 @@ Node* insertDictionary(Node *root) {
         while(fgets(buff,sizeof buff,file)!= NULL) {
 
             if(buff[0]=='#')continue;
-            // fprintf(stdout,"%s",buff); //print the file contents on stdout.
-            // insert(root, buff);
             root=insert(root, buff);
             count++;
             // if(count == 30) break;
@@ -130,6 +131,7 @@ Node* insertDictionary(Node *root) {
     
 }
 
+
 bool isLeaf(Node* node) {
     if (node == NULL) return false;
 
@@ -141,19 +143,21 @@ bool isLeaf(Node* node) {
     return true;
 }
 
-Node* getNode(Node* root, char substring[]) {
+Node* getNode(Node* root,char substring[]) {
     Node* currNode = root;
     char currentLetter = '\0';
     int letterIndex = 0;
     int length = strlen(substring);
-    int i;
-    for (i = 0; i < length; i++) {
-        currentLetter = tolower(substring[i]);
+	int i;
+    for (i = 0; i < length; i++){
+        currentLetter = substring[i];
         letterIndex = (int)currentLetter - 'a';
 
         if (letterIndex < 0 || letterIndex > 25) return NULL;
 
-        if (currNode->child[letterIndex] == NULL) return NULL;
+        // If letter does not have matching node
+        
+        if (currNode->child[letterIndex]==NULL) return NULL;
         else {
             currNode = currNode->child[letterIndex];
         }
@@ -162,9 +166,8 @@ Node* getNode(Node* root, char substring[]) {
 }
 
 
+
 char* getCompletions(Node* root, char word[MAXLEN]) {
-    int  found=-1;
-    char wordsFound[MAX][MAXLEN];
     char copywod[MAXLEN];
     strcpy(copywod,word);
     Node* parentNode = getNode(root,copywod);
@@ -172,35 +175,20 @@ char* getCompletions(Node* root, char word[MAXLEN]) {
 
     Node* currentNode;
     char prefix[MAXLEN];
-    // stack<node>tovisit
     pushN(parentNode);
 
-    // each node in toVisit has a corresponding prefix in prefixes
-
-    // Remove last letter from word so that it is not repeated
-    // word = word.substr(0, strlen(word) - 1);
-    
-    if(strlen(word)!=1){
-        word[strlen(word) - 1] ='\0';
-    }
-    else{
-        printf("Minimum 2 characters required");
-        return "";
-    }
-    // std::stack<std::string> prefixes;
+    word[strlen(word) - 1] ='\0';
 
     pushW(word);
 
-    // std::vector<std::string> wordsFound;
-    
+    int  found=-1;
+    char wordsFound[MAX][MAXLEN];
 
-    while (!isEmptyN()){
+    while (!isEmptyN() && found < MAX-1){
         currentNode = topN();
         popN();
-        // prefix = prefixes.top();
         strcpy(prefix, topW() );
 
-        // prefixes.pop();
         popW();
 
         if (isLeaf(currentNode)){
@@ -228,21 +216,25 @@ char* getCompletions(Node* root, char word[MAXLEN]) {
             }   
         }
     }
-    // std::stringstream allWords;
-    // for (std::vector<std::string>::iterator it = wordsFound.begin() ; it != wordsFound.end(); ++it){
-    //     allWords << *it << "\n";
-    // }
-    // allWords << "\n";
-    // return allWords.str();
-    // 
+
     printf("\n---------Suggestions---------- \n");
     int i;
-    printf("Found %d words\n",found);
     for(i = 0; i <found; i++){
         printf("%s\n", wordsFound[i]);
     }
     return "sd";
 }
+
+void tolowercase(char buff[MAXLEN]){
+	int i;
+    for(i = 0; i < MAXLEN; i++){
+        if(buff[i]>='A' && buff[i]<'Z'){
+            buff[i]= 'a' + buff[i]-'A';
+        }
+
+    }
+}
+
 
 int main(){
     
@@ -250,26 +242,15 @@ int main(){
     root=newNode();
     root=insertDictionary(root);
 
-    // char a='5';
-    // char arr[]={4,a,'\0'};
-    // printf("%s\n",arr);
     char buff[MAXLEN];
-    // strcpy(buff,"compli");
-    printf("\nEnter word to complete\n");
+    printf("\nEnter random word to complete\n");
     scanf("%s",buff);
+
+    tolowercase(buff);
 
     getCompletions(root,buff);
 
-    // pushW("a");
-    // pushW("b");
-    // pushW("c");
-    // pushW("d");
-    // pushW("e");
-
-    // while(!isEmptyW()){
-    //     printf("%s",popW());
-    // }
-    
+    printf("\n\nCompleted suggesting \n");
 
     return 0;
 }

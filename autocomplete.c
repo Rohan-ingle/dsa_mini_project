@@ -3,6 +3,12 @@
 #include<stdbool.h>
 #include<ctype.h>
 #include<stdlib.h>
+
+#define COL_GREEN  printf("\e[0;32m");
+#define COL_RED    printf("\e[0;31m");
+#define COL_WHITE  printf("\e[0;37m");
+#define COL_YELLOW printf("\e[0;33m");
+
 #define MAX 1000
 #define MAXLEN 1000
 
@@ -13,7 +19,7 @@ typedef struct node{
 
 } Node;
 
-
+char suggestions[MAX][MAXLEN];
 
 
 //----------------------------------------------------------------
@@ -36,6 +42,9 @@ bool isEmptyW(){
     return (tos2 < 0);
 }
 
+
+
+
 //----------------------------------------------------------------
 //node stack related
 Node* arrNode[MAX];
@@ -54,12 +63,18 @@ bool isEmptyN(){
     return (tos1 < 0);
 }
 
+
+int minI(int a, int b){
+    return (a < b)?a:b;
+}
+
+
 Node* newNode(){
     Node* temp= (Node*)malloc(sizeof(Node));
     temp->ch = '\0';
     temp->isWord = false;
-	int i;
-    for (i = 0; i < 26; i++) {
+
+    for (int i = 0; i < 26; i++) {
         temp->child[i] = NULL;
     }
     return temp;
@@ -76,8 +91,7 @@ Node* insert(Node* root, char word[]){
     int letterIndex = 0;
 
     int wordLen = strlen(word);
-    int i;
-    for (i = 0; i < wordLen; i++) {
+    for (int i = 0; i < wordLen; i++) {
         // convert to lower case
         currentLetter = (char)tolower((int)word[i]);
 
@@ -118,7 +132,6 @@ Node* insertDictionary(Node *root) {
             if(buff[0]=='#')continue;
             root=insert(root, buff);
             count++;
-            // if(count == 30) break;
 
         }
         printf("%ld", count);
@@ -136,8 +149,7 @@ bool isLeaf(Node* node) {
     if (node == NULL) return false;
 
     if (!node->isWord) return false;
-    int i;
-    for (i = 0; i < 26; i++){
+    for (int i = 0; i < 26; i++){
         if (node->child[i] != NULL) return false;
     }
     return true;
@@ -148,8 +160,8 @@ Node* getNode(Node* root,char substring[]) {
     char currentLetter = '\0';
     int letterIndex = 0;
     int length = strlen(substring);
-	int i;
-    for (i = 0; i < length; i++){
+
+    for (int i = 0; i < length; i++){
         currentLetter = substring[i];
         letterIndex = (int)currentLetter - 'a';
 
@@ -177,6 +189,9 @@ char* getCompletions(Node* root, char word[MAXLEN]) {
     char prefix[MAXLEN];
     pushN(parentNode);
 
+    // each node in toVisit has a corresponding prefix in prefixes
+
+    // Remove last letter from word so that it is not repeated
     word[strlen(word) - 1] ='\0';
 
     pushW(word);
@@ -184,7 +199,7 @@ char* getCompletions(Node* root, char word[MAXLEN]) {
     int  found=-1;
     char wordsFound[MAX][MAXLEN];
 
-    while (!isEmptyN() && found < MAX-1){
+    while (!isEmptyN() ){
         currentNode = topN();
         popN();
         strcpy(prefix, topW() );
@@ -195,7 +210,7 @@ char* getCompletions(Node* root, char word[MAXLEN]) {
             char strtemp[2];
             strtemp[0]=currentNode->ch;
             strcat(prefix,strtemp );
-            strcpy(wordsFound[++found], prefix );
+            if(found < MAX-1)strcpy(wordsFound[++found], prefix );
         }
         else {
             char strtemp[2];
@@ -203,12 +218,11 @@ char* getCompletions(Node* root, char word[MAXLEN]) {
             strcat(prefix,strtemp );
             
                 if (currentNode->isWord){
-                    strcpy(wordsFound[++found], prefix );
+                    if(found < MAX-1)strcpy(wordsFound[++found], prefix );
                 }
 
             // Check all children for completions
-            int i;
-            for (i = 0; i < 26; i++) {
+            for (int i = 0; i < 26; i++) {
                 if (currentNode->child[i] != NULL){
                     pushN(currentNode->child[i]);
                     pushW(prefix);
@@ -216,18 +230,17 @@ char* getCompletions(Node* root, char word[MAXLEN]) {
             }   
         }
     }
-
-    printf("\n---------Suggestions---------- \n");
-    int i;
-    for(i = 0; i <found; i++){
-        printf("%s\n", wordsFound[i]);
+    printf("\n---------Suggestions----------  %d \n",found);
+    
+    for(int i = 0; i <minI(10,found); i++){
+        printf("%d. %s\n",(i+1)%10 ,wordsFound[i]);
+        strcpy(suggestions[i],wordsFound[i]);
     }
     return "sd";
 }
 
 void tolowercase(char buff[MAXLEN]){
-	int i;
-    for(i = 0; i < MAXLEN; i++){
+    for(int i = 0; i < MAXLEN; i++){
         if(buff[i]>='A' && buff[i]<'Z'){
             buff[i]= 'a' + buff[i]-'A';
         }
@@ -235,22 +248,67 @@ void tolowercase(char buff[MAXLEN]){
     }
 }
 
-
 int main(){
     
     Node* root;
     root=newNode();
     root=insertDictionary(root);
 
-    char buff[MAXLEN];
-    printf("\nEnter random word to complete\n");
-    scanf("%s",buff);
+    char str[10000];
+    char word[1000];
 
-    tolowercase(buff);
+    memset(str, '\0',10000); 
+    memset(word, '\0',1000); 
 
-    getCompletions(root,buff);
+    while(1){
+        char ch = getch();
+        system("cls");
+        printf("PRESS Esc to exit / type like you usually do... ");
+        // printf("PRESS Esc to exit ... input : %d %c",ch,ch);
 
-    printf("\n\nCompleted suggesting \n");
+        if(ch == 27)exit(0);
+        if(ch == 8 ){
+            if(strlen(word)>0) word[strlen(word)-1] ='\0';
+            
+        }
+
+        else if(ch >='0' && ch <= '9'){
+            memset(word, 0,1000);
+            if(ch-'0'-1 >= 0)strcpy(word, suggestions[(ch-'0'-1)%10]);
+            else strcpy(word, suggestions[9]);
+        }
+        
+        else{
+            char strtemp[2];
+            strtemp[0]=ch;
+            if(ch==32){
+                strcat(str," " );
+                strcat(str,word );
+                memset(word,'\0',1000); 
+            }
+            else strcat(word,strtemp);
+                
+        }
+
+
+        COL_WHITE
+        printf("\n\nType: %s",str);
+        COL_GREEN
+        printf(" %s",word);
+        
+        COL_RED
+        printf("| ");
+
+        printf("\n\nPress keys 0-9 to autocomplete:\n");
+        COL_YELLOW
+        char copywod[MAXLEN];
+        strcpy(copywod,word);
+        tolowercase(copywod);
+        getCompletions(root,copywod);
+        COL_GREEN
+
+    }
+
 
     return 0;
 }
